@@ -1,8 +1,13 @@
 /* 
+ * Copyright (C) 2015 CODYCO Project
+ * Author: Serena Ivaldi <serena.ivaldi@inria.fr>
+ * website: www.codyco.eu
+ *
  * Copyright (C) 2012 MACSi Project
  * Author: Serena Ivaldi
  * email:  serena.ivaldi@isir.upmc.fr
  * website: www.macsi.isir.upmc.fr
+ *
  * Permission is granted to copy, distribute, and/or modify this program
  * under the terms of the GNU General Public License, version 2 or any
  * later version published by the Free Software Foundation.
@@ -42,8 +47,8 @@ Linux
 //
 #include <gtk/gtk.h>
 //
-#include <macsi/modHelp/modHelp.h>
-#include <macsi/objects/objects.h>
+//#include <modHelp/modHelp.h>
+//#include <macsi/objects/objects.h>
 //
 #include <string>
 #include <iostream>
@@ -51,11 +56,29 @@ Linux
 using namespace yarp::os;
 using namespace yarp::sig;
 using namespace yarp::dev;
-using namespace macsi::modHelp;
-using namespace macsi::objects;
+//using namespace modHelp;
+//using namespace macsi::objects;
 using namespace std;
 
+#define displayValue(V) cout<<" "<< #V <<" : "<<V<<endl;
+#define displayNameValue(S,V) cout<<" "<< S <<" : "<<V<<endl;
+#define displayVector(V) cout<<" "<< #V <<" : "<<V.toString()<<endl;
+#define displayNameVector(S,V) cout<<" "<< S <<" : "<<V.toString()<<endl;
 
+ void readString(ResourceFinder &rf, string name, string &v, string vdefault)
+{
+if(rf.check(name.c_str()))
+{
+v = rf.find(name.c_str()).asString();
+}
+else
+{
+v = vdefault;
+cout<<"Could not find value for "<<name<<". "
+<<"Setting default "<<vdefault<<endl;
+}
+displayNameValue(name,v);
+}
 
 
 // the port used to send data
@@ -124,9 +147,10 @@ int main(int argc, char * argv[])
     ResourceFinder finder;
     //retrieve information for the list of parts
     finder.setVerbose(true);
-    finder.setContext("taskRecorder");
+    finder.setDefaultContext("taskRecorder");
     finder.setDefaultConfigFile("taskRecorder.ini");
-    finder.configure("MACSI_ROOT",argc,argv);
+    //finder.setDefaultContext("code_serena_icub");
+    finder.configure(argc,argv);
 
     if (finder.check("help"))
     {
@@ -139,12 +163,13 @@ int main(int argc, char * argv[])
 
     Time::turboBoost();
     string moduleName;
-    string pathFiles= string (finder.getContextPath()+"/data");
+    //string pathFiles= string (finder.getContextPath()+"/data");
+    string pathFiles= string (finder.getHomeContextPath()+"/data");
     //pathFiles="/home/icub/Desktop/graspSaves"
     cout<<"Writing to path = "<<pathFiles<<endl;
 
     readString(finder,"name",moduleName,"taskRecorder");
-    cout<<"GraspRecorderGUI: opening the port sending commands"<<endl;
+    cout<<"TaskRecorderGUI: opening the port sending commands"<<endl;
     //opening port to send data
     outPort.open(string("/"+moduleName+"/gui:o").c_str());
     Network::connect(string("/"+moduleName+"/gui:o").c_str(),"/recordArms/rpc");
@@ -215,12 +240,12 @@ int main(int argc, char * argv[])
     outPort.write(bot);
     cout<<"Sent message: "<<bot.toString()<<endl;
 
-    cout<<"GraspRecorderGUI: closing the port sending commands"<<endl;
+    cout<<"TaskRecorderGUI: closing the port sending commands"<<endl;
     //closing the port sending commands
     outPort.interrupt();
     outPort.close();
 
-    cout<<"GraspRecorderGUI: finished"<<endl;
+    cout<<"TaskRecorderGUI: finished"<<endl;
 
     return 1;
 }
